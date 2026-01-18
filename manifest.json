@@ -1,13 +1,27 @@
 {
   "manifest_version": 3,
   "name": "AI Chat Downloader",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Download chat logs from ChatGPT, Claude, Gemini, Perplexity, Grok, and DeepSeek as Markdown.",
   "permissions": [
     "activeTab",
     "storage",
-    "downloads"
+    "downloads",
+    "scripting"
   ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "AI Chat Downloader"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+D",
+        "mac": "Command+Shift+D"
+      },
+      "description": "Download current chat"
+    }
+  },
   "host_permissions": [
     "*://chatgpt.com/*",
     "*://claude.ai/*",
