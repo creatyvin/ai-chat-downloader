@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "AI Chat Downloader",
+  "version": "1.1",
+  "description": "Download chat logs from ChatGPT, Claude, Gemini, Perplexity, Grok, and DeepSeek as Markdown.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "downloads"
+  ],
+  "host_permissions": [
+    "*://chatgpt.com/*",
+    "*://claude.ai/*",
+    "*://gemini.google.com/*",
+    "*://www.perplexity.ai/*",
+    "*://x.com/*",
+    "*://chat.deepseek.com/*"
+  ],
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://chatgpt.com/*",
+        "*://claude.ai/*",
+        "*://gemini.google.com/*",
+        "*://www.perplexity.ai/*",
+        "*://x.com/*",
+        "*://chat.deepseek.com/*"
+      ],
+      "js": [
+        "parsers/base.js",
+        "parsers/chatgpt.js",
+        "parsers/claude.js",
+        "parsers/gemini.js",
+        "parsers/perplexity.js",
+        "parsers/others.js",
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ]
+    }
+  ]
+}

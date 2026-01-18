@@ -1,0 +1,48 @@
+.ai-chat-downloader-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ai-chat-downloader-btn:hover {
+  transform: scale(1.1);
+  background-color: #1d4ed8;
+}
+
+.ai-chat-downloader-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Tooltip */
+.ai-chat-downloader-btn::after {
+  content: "Download Chat";
+  position: absolute;
+  right: 60px;
+  background-color: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.ai-chat-downloader-btn:hover::after {
+  opacity: 1;
+}
