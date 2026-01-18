@@ -13,6 +13,93 @@ class ChatParser {
         throw new Error("Method 'parse()' must be implemented.");
     }
 
+    // Extract clean text content from an element
+    extractTextContent(element) {
+        if (!element) return '';
+
+        // Clone to avoid modifying original
+        const clone = element.cloneNode(true);
+
+        // Remove script, style, and hidden elements
+        clone.querySelectorAll('script, style, [hidden], [aria-hidden="true"], svg').forEach(el => el.remove());
+
+        // Get text content
+        let text = clone.textContent || clone.innerText || '';
+
+        // Clean up whitespace
+        text = text.replace(/\s+/g, ' ').trim();
+
+        return text;
+    }
+
+    // Extract images as markdown
+    extractImages(element) {
+        if (!element) return [];
+
+        const images = [];
+        element.querySelectorAll('img').forEach(img => {
+            const src = img.src || img.dataset.src;
+            const alt = img.alt || img.title || 'image';
+            if (src && !src.startsWith('data:image/svg')) {
+                images.push(`![${alt}](${src})`);
+            }
+        });
+
+        return images;
+    }
+
+    // Extract links as markdown
+    extractLinks(element) {
+        if (!element) return [];
+
+        const links = [];
+        const seenUrls = new Set();
+
+        element.querySelectorAll('a[href]').forEach(link => {
+            const href = link.href;
+            const text = link.textContent.trim();
+
+            // Skip empty, anchor, or javascript links
+            if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+            // Skip duplicates
+            if (seenUrls.has(href)) return;
+
+            seenUrls.add(href);
+            links.push({ text: text || href, url: href });
+        });
+
+        return links;
+    }
+
+    // Extract code blocks with language detection
+    extractCodeBlocks(element) {
+        if (!element) return [];
+
+        const codeBlocks = [];
+
+        element.querySelectorAll('pre code, pre').forEach(block => {
+            const codeEl = block.tagName === 'PRE' ? block.querySelector('code') || block : block;
+            const code = codeEl.textContent.trim();
+
+            if (!code || code.length < 10) return;
+
+            // Try to detect language from class
+            const langMatch = codeEl.className.match(/language-(\w+)/);
+            const lang = langMatch ? langMatch[1] : '';
+
+            codeBlocks.push({ lang, code });
+        });
+
+        return codeBlocks;
+    }
+
+    // Format code blocks as markdown
+    formatCodeBlocksMarkdown(codeBlocks) {
+        return codeBlocks.map(block =>
+            `\`\`\`${block.lang}\n${block.code}\n\`\`\``
+        ).join('\n\n');
+    }
+
     formatMarkdown(parsedData) {
         const { title, date, messages } = parsedData;
         let md = `# ${title}\n\n`;
