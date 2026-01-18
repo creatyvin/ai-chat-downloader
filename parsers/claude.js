@@ -28,16 +28,27 @@ class ClaudeParser extends (window.ChatParser || Object) {
 
             humanTurns.forEach(el => {
                 const rect = el.getBoundingClientRect();
-                const content = this.extractTextContent(el);
-                if (content && content.length > 5 && !seenTexts.has(content)) {
+                const text = this.extractTextContent(el);
+                if (text && text.length > 5 && !seenTexts.has(text)) {
+                    seenTexts.add(text);
+
+                    // Extract images from user message
+                    const images = this.extractImages(el);
+                    const content = images.length > 0 ? text + '\n\n' + images.join('\n') : text;
+
                     allTurns.push({ role: 'User', content, top: rect.top + window.scrollY });
-                    seenTexts.add(content);
                 }
             });
 
             assistantTurns.forEach(el => {
                 const rect = el.getBoundingClientRect();
                 let content = this.extractTextContent(el);
+
+                // Extract images
+                const images = this.extractImages(el);
+                if (images.length > 0) {
+                    content += '\n\n' + images.join('\n');
+                }
 
                 // Try to extract artifact content
                 const artifactContent = this.extractArtifactContent(el);
@@ -95,24 +106,7 @@ class ClaudeParser extends (window.ChatParser || Object) {
         return { title, date: new Date().toLocaleString(), messages };
     }
 
-    extractTextContent(element) {
-        if (!element) return '';
-
-        // Clone to avoid modifying original
-        const clone = element.cloneNode(true);
-
-        // Remove script, style, and hidden elements
-        clone.querySelectorAll('script, style, [hidden], [aria-hidden="true"]').forEach(el => el.remove());
-
-        // Get text content
-        let text = clone.textContent || clone.innerText || '';
-
-        // Clean up whitespace
-        text = text.replace(/\s+/g, ' ').trim();
-
-        return text;
-    }
-
+    // Claude-specific artifact extraction (extends base functionality)
     extractArtifactContent(element) {
         if (!element) return '';
 

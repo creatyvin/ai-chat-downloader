@@ -38,45 +38,71 @@ class PerplexityParser extends (window.ChatParser || Object) {
         const messages = [];
         const seenTexts = new Set();
 
-        // Strategy: 
-        // Iterate through major semantic blocks (groups/sections) 
+        // Strategy:
+        // Iterate through major semantic blocks (groups/sections)
         // to maintain order and structure.
         const blocks = document.querySelectorAll('.group, section, [class*="pb-"], [class*="mb-"]');
 
         blocks.forEach(block => {
             // Find User Query
-            // Perplexity queries often have specific font classes or are in headers
             const qEl = block.querySelector('h1, h2, .font-display, [class*="font-semibold"]');
             // Find AI Answer
             const aEl = block.querySelector('.prose, [class*="prose"]');
 
             if (qEl) {
-                const text = qEl.innerText.trim();
+                const text = this.extractTextContent(qEl);
                 // Filter: reasonably long, not a button, not seen
                 if (text.length > 4 && !seenTexts.has(text) && !text.includes('Related') && !text.includes('Share')) {
-                    messages.push({ role: "User", content: text, time: "" });
                     seenTexts.add(text);
+
+                    // Extract images from query
+                    const images = this.extractImages(qEl);
+                    const content = images.length > 0 ? text + '\n\n' + images.join('\n') : text;
+
+                    messages.push({ role: "User", content, time: "" });
                 }
             }
 
             if (aEl) {
-                // Use textContent to get hidden accordion text if innerText is empty or truncated
-                const text = aEl.innerText.trim() || aEl.textContent.trim();
+                const text = this.extractTextContent(aEl);
                 if (text.length > 0 && !seenTexts.has(text)) {
-                    messages.push({ role: "Perplexity", content: text, time: "" });
                     seenTexts.add(text);
+
+                    // Extract images, code, and links from answer
+                    const images = this.extractImages(aEl);
+                    const codeBlocks = this.extractCodeBlocks(aEl);
+                    const links = this.extractLinks(aEl);
+
+                    let content = text;
+                    if (codeBlocks.length > 0) {
+                        content += '\n\n' + this.formatCodeBlocksMarkdown(codeBlocks);
+                    }
+                    if (images.length > 0) {
+                        content += '\n\n' + images.join('\n');
+                    }
+                    if (links.length > 0) {
+                        content += '\n\n**Sources:**\n' + links.map(l => `- [${l.text}](${l.url})`).join('\n');
+                    }
+
+                    messages.push({ role: "Perplexity", content, time: "" });
                 }
             }
         });
 
         // Fallback: If we missed things in the middle (lazy loading or weird DOM)
-        // just grab ALL prose blocks that weren't seen
         const allProse = document.querySelectorAll('.prose');
         allProse.forEach(p => {
-            const text = p.innerText.trim() || p.textContent.trim();
+            const text = this.extractTextContent(p);
             if (text && !seenTexts.has(text)) {
-                messages.push({ role: "Perplexity (Recovered)", content: text, time: "" });
                 seenTexts.add(text);
+
+                const codeBlocks = this.extractCodeBlocks(p);
+                let content = text;
+                if (codeBlocks.length > 0) {
+                    content += '\n\n' + this.formatCodeBlocksMarkdown(codeBlocks);
+                }
+
+                messages.push({ role: "Perplexity (Recovered)", content, time: "" });
             }
         });
 

@@ -36,16 +36,29 @@ class ChatGPTParser extends (window.ChatParser || Object) {
                     const contentEl = turn.querySelector('.markdown, .prose, .text-base, .whitespace-pre-wrap');
                     const targetEl = contentEl || turn;
 
-                    // Extract text content
+                    // Extract text content using base method
                     const text = this.extractTextContent(targetEl);
 
                     if (text && text.length > 5 && !seenTexts.has(text)) {
+                        seenTexts.add(text);
+
+                        // Extract images and code
+                        const images = this.extractImages(targetEl);
+                        const codeBlocks = this.extractCodeBlocks(targetEl);
+
+                        let content = text;
+                        if (codeBlocks.length > 0) {
+                            content += '\n\n' + this.formatCodeBlocksMarkdown(codeBlocks);
+                        }
+                        if (images.length > 0) {
+                            content += '\n\n' + images.join('\n');
+                        }
+
                         messages.push({
                             role: role === 'user' ? 'User' : 'ChatGPT',
-                            content: text,
+                            content,
                             time: ""
                         });
-                        seenTexts.add(text);
                     }
                 }
             });
@@ -60,15 +73,28 @@ class ChatGPTParser extends (window.ChatParser || Object) {
 
                 if (role === 'user' || role === 'assistant') {
                     const contentEl = article.querySelector('.markdown, .prose, .text-base, .whitespace-pre-wrap');
-                    const text = this.extractTextContent(contentEl || article);
+                    const targetEl = contentEl || article;
+                    const text = this.extractTextContent(targetEl);
 
                     if (text && text.length > 5 && !seenTexts.has(text)) {
+                        seenTexts.add(text);
+
+                        const images = this.extractImages(targetEl);
+                        const codeBlocks = this.extractCodeBlocks(targetEl);
+
+                        let content = text;
+                        if (codeBlocks.length > 0) {
+                            content += '\n\n' + this.formatCodeBlocksMarkdown(codeBlocks);
+                        }
+                        if (images.length > 0) {
+                            content += '\n\n' + images.join('\n');
+                        }
+
                         messages.push({
                             role: role === 'user' ? 'User' : 'ChatGPT',
-                            content: text,
+                            content,
                             time: ""
                         });
-                        seenTexts.add(text);
                     }
                 }
             });
@@ -76,24 +102,6 @@ class ChatGPTParser extends (window.ChatParser || Object) {
 
         console.log(`ChatGPTParser: Captured ${messages.length} messages.`);
         return { title, date: new Date().toLocaleString(), messages };
-    }
-
-    extractTextContent(element) {
-        if (!element) return '';
-
-        // Clone to avoid modifying original
-        const clone = element.cloneNode(true);
-
-        // Remove script, style, and hidden elements
-        clone.querySelectorAll('script, style, [hidden], [aria-hidden="true"]').forEach(el => el.remove());
-
-        // Get text content
-        let text = clone.textContent || clone.innerText || '';
-
-        // Clean up whitespace
-        text = text.replace(/\s+/g, ' ').trim();
-
-        return text;
     }
 }
 window.ChatGPTParser = ChatGPTParser;
